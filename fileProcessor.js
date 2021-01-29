@@ -82,7 +82,7 @@ async function getLayers(fileName) {
 
 function cleanupFiles() {
   try {
-    let folder = tmpDir;
+    let folder = path.join(tmpDir, 'archive');
     fs.emptyDirSync(folder);
     console.log('Temp files removed.');
   } catch (err) {
