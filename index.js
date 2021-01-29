@@ -12,6 +12,10 @@ app.use(fileUpload());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Temporary folder
+const tmpDir = process.env.TEMP_DIR || path.join(__dirname, 'tmp');
+
+// Image processing configuration
 const config = {
   resizeWidth: 600,
   density: 1000,
@@ -30,7 +34,7 @@ app.post('/upload', (req, res) => {
   }
 
   archive = req.files.gerberArchive;
-  uploadPath = path.join(__dirname, 'tmp', archive.name);
+  uploadPath = path.join(tmpDir, archive.name);
 
   // Move the uploaded file to the tmp dir
   archive.mv(uploadPath, (err) => {
