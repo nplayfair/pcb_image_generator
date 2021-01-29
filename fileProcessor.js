@@ -14,6 +14,9 @@ const gerberFiles = [
   'CAMOutputs/GerberFiles/profile.gbr'
 ]
 
+// Temporary folder
+const tmpDir = process.env.TEMP_DIR || path.join(__dirname, 'tmp');
+
 /**
  * Extracts the passed in zip file
  * @param {string} fileName
@@ -28,7 +31,7 @@ async function extractArchive(fileName) {
   return new Promise((resolve, reject) => {
     // Try to extract
     archive.on('ready', () => {
-      let extDir = path.join(__dirname, 'tmp', 'archive');
+      let extDir = path.join(tmpDir, 'archive');
       fs.mkdirSync(extDir, { recursive: true });
       archive.extract(null, extDir, (err, count) => {
         if(!err) {
@@ -47,7 +50,7 @@ async function extractArchive(fileName) {
 
 async function getLayers(fileName) {
   return new Promise((resolve, reject) => {
-    const tempDir = path.join(__dirname, 'tmp', 'archive');
+    const tempDir = path.join(tmpDir, 'archive');
     extractArchive(fileName)
       .then(numfiles => {
         console.log(`${numfiles} files extracted successfully`);
@@ -71,7 +74,7 @@ async function getLayers(fileName) {
 
 function cleanupFiles() {
   try {
-    let folder = path.join(__dirname, 'tmp');
+    let folder = tmpDir;
     fs.emptyDirSync(folder);
     console.log('Temp files removed.');
   } catch (err) {
