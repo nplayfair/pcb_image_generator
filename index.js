@@ -1,9 +1,12 @@
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const path = require('path');
+require('dotenv').config()
 const app = express();
 
+
 // Options
+const PORT = process.env.PORT || 3000;
 app.use(fileUpload());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
@@ -41,6 +44,6 @@ app.get('/image', (req, res) => {
   res.render('image');
 })
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
