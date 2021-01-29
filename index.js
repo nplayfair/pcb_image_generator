@@ -1,6 +1,7 @@
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const path = require('path');
+const fileProc = require('./fileProcessor.js')
 require('dotenv').config()
 const app = express();
 
@@ -10,6 +11,12 @@ const PORT = process.env.PORT || 3000;
 app.use(fileUpload());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
+
+const config = {
+  resizeWidth: 600,
+  density: 1000,
+  compLevel: 1,
+}
 
 // Upload route
 app.post('/upload', (req, res) => {
@@ -29,8 +36,10 @@ app.post('/upload', (req, res) => {
   archive.mv(uploadPath, (err) => {
     if (err)
       return res.status(500).send(err);
-    
-      res.send('File uploaded!');
+    fileProc.gerberToImage(uploadPath, config)
+      .then(filename => {
+        res.send(`Generated image ${filename}`);
+      })
   });
 });
 
