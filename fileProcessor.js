@@ -14,8 +14,9 @@ const gerberFiles = [
   'CAMOutputs/GerberFiles/profile.gbr'
 ]
 
-// Temporary folder
+// Storage folders
 const tmpDir = process.env.TEMP_DIR || path.join(__dirname, 'tmp');
+const imgDir = process.env.IMG_DIR || path.join(__dirname, 'img');
 
 /**
  * Extracts the passed in zip file
@@ -85,7 +86,7 @@ function cleanupFiles() {
 async function gerberToImage(gerber, config) {
   return new Promise((resolve, reject) => {
     const imageName = path.basename(gerber, '.zip');
-    const destFile = path.join(__dirname, 'img', imageName) + '.png';
+    const destFile = path.join(imgDir, imageName) + '.png';
     getLayers(gerber)
       .then(layers => {
         pcbStackup(layers).then(stackup => {
