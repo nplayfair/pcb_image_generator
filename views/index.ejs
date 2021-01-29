@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCB Image Generator</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <form action="/upload" method="post" encType="multipart/form-data" class="uploadForm">
+    <input type="file" name="gerberArchive" id="gerber" onchange="fileLabel()">
+    <p id="info">Drag your zipped gerber file here or click this area and select it.</p>
+    <button type="submit">Upload</button>
+  </form>
+  <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+      const gerber = document.querySelector('gerber');
+      const info = document.querySelector('info');
+    })
+    function fileLabel() {
+      info.innerHTML = gerber.files[0].name;
+    }
+  </script>
+</body>
+</html>
