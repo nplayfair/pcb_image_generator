@@ -87,10 +87,14 @@ async function gerberToImage(gerber, config) {
   return new Promise((resolve, reject) => {
     const imageName = path.basename(gerber, '.zip');
     const destFile = path.join(imgDir, imageName) + '.png';
+    // Create imgDir if it does not exist
+    fs.ensureDirSync(imgDir);
+    // Build the layers array
     getLayers(gerber)
       .then(layers => {
+        // Build the stackup from the layers array
         pcbStackup(layers).then(stackup => {
-          // Create buffer from SVG string
+          // Create buffer from SVG string and convert to PNG
           sharp(Buffer.from(stackup.top.svg), { density: config.density })
           .resize({ width: config.resizeWidth })
           .png({ 
