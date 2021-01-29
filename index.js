@@ -8,9 +8,12 @@ const app = express();
 
 // Options
 const PORT = process.env.PORT || 3000;
+const imgDir = process.env.IMG_DIR || path.join(__dirname, 'img');
+fileProc.config();
 app.use(fileUpload());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/img', express.static(imgDir));
 
 // Temporary folder
 const tmpDir = process.env.TEMP_DIR || path.join(__dirname, 'tmp');

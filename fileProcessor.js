@@ -18,6 +18,13 @@ const gerberFiles = [
 const tmpDir = process.env.TEMP_DIR || path.join(__dirname, 'tmp');
 const imgDir = process.env.IMG_DIR || path.join(__dirname, 'img');
 
+function config() {
+  // Create tmpDir if it does not exist
+  fs.ensureDirSync(tmpDir);
+  // Create imgDir if it does not exist
+  fs.ensureDirSync(imgDir);
+}
+
 /**
  * Extracts the passed in zip file
  * @param {string} fileName
@@ -118,6 +125,7 @@ async function gerberToImage(gerber, config) {
 }
 
 module.exports = {
+  config,
   extractArchive,
   getLayers,
   cleanupFiles,
