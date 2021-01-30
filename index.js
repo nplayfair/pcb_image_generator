@@ -8,15 +8,16 @@ const app = express();
 
 // Options
 const PORT = process.env.PORT || 3000;
-const imgDir = process.env.IMG_DIR || path.join(__dirname, 'img');
-fileProc.config();
+const folderConfig = {
+  tmpDir: process.env.TEMP_DIR || path.join(__dirname, 'tmp'),
+  imgDir: process.env.IMG_DIR || path.join(__dirname, 'img')
+}
+// Pass folder config to file processor
+fileProc.config(folderConfig);
 app.use(fileUpload());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/img', express.static(imgDir));
-
-// Temporary folder
-const tmpDir = process.env.TEMP_DIR || path.join(__dirname, 'tmp');
+app.use('/img', express.static(folderConfig.imgDir));
 
 // Image processing configuration
 const config = {
@@ -37,13 +38,13 @@ app.post('/upload', (req, res) => {
   }
 
   archive = req.files.gerberArchive;
-  uploadPath = path.join(tmpDir, archive.name);
+  uploadPath = path.join(folderConfig.tmpDir, archive.name);
 
   // Move the uploaded file to the tmp dir
   archive.mv(uploadPath, (err) => {
     if (err)
       return res.status(500).send(err);
-    fileProc.gerberToImage(uploadPath, config, imgDir)
+    fileProc.gerberToImage(uploadPath, config, folderConfig.tmpDir, folderConfig.imgDir)
       .then(filename => {
         res.send(`Generated image ${filename}`);
       })
@@ -57,7 +58,9 @@ app.get('/', (req, res) => {
 
 // Image page
 app.get('/image', (req, res) => {
-  res.render('image');
+  res.render('image', {
+    imgUrl: '/img/test.png'
+  });
 })
 
 app.listen(PORT, () => {
