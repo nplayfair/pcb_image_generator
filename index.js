@@ -43,7 +43,7 @@ app.post('/upload', (req, res) => {
   archive.mv(uploadPath, (err) => {
     if (err)
       return res.status(500).send(err);
-    fileProc.gerberToImage(uploadPath, config)
+    fileProc.gerberToImage(uploadPath, config, imgDir)
       .then(filename => {
         res.send(`Generated image ${filename}`);
       })

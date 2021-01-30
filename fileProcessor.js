@@ -25,6 +25,13 @@ function config() {
   fs.ensureDirSync(imgDir);
 }
 
+function handleError(e) {
+  // Clean up temp files
+  cleanupFiles();
+  console.error(e);
+  return e;
+}
+
 /**
  * Extracts the passed in zip file
  * @param {string} fileName
@@ -90,38 +97,38 @@ function cleanupFiles() {
   }
 }
 
-async function gerberToImage(gerber, config) {
+async function gerberToImage(gerber, config, outputDir) {
+  // Set filenames
+  const imageName = path.basename(gerber, '.zip');
+  const destFile = path.join(outputDir, imageName) + '.png';
+
+  // Make sure output dir exists
+  try {
+    fs.ensureDirSync(outputDir);
+  } 
+  catch (e) {
+    console.error(e)
+  }
+
   return new Promise((resolve, reject) => {
-    const imageName = path.basename(gerber, '.zip');
-    const destFile = path.join(imgDir, imageName) + '.png';
-    // Create imgDir if it does not exist
-    fs.ensureDirSync(imgDir);
-    // Build the layers array
     getLayers(gerber)
-      .then(layers => {
-        // Build the stackup from the layers array
-        pcbStackup(layers).then(stackup => {
-          // Create buffer from SVG string and convert to PNG
-          sharp(Buffer.from(stackup.top.svg), { density: config.density })
-          .resize({ width: config.resizeWidth })
-          .png({ 
-            compressionLevel: config.compLevel })
-          .toFile(destFile)
-          .then((info) => {
-            // Succesful
-            cleanupFiles();
-            resolve(destFile);
-          })
-          .catch((e) => {
-            cleanupFiles();
-            reject(e);
-          })
-        })
+      .then(pcbStackup)
+      .then(stackup => {
+        sharp(Buffer.from(stackup.top.svg), { density: config.density })
+        .resize({ width: config.resizeWidth })
+        .png({ 
+          compressionLevel: config.compLevel })
+        .toFile(destFile)
+      })
+      .then(() => {
+        cleanupFiles();
+        resolve(destFile);
+      })
       .catch((e) => {
+        handleError(e);
         reject(e);
-      });
-    })
-  })
+      })
+  });
 }
 
 module.exports = {
