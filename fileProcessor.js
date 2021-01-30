@@ -14,30 +14,31 @@ const gerberFiles = [
   'CAMOutputs/GerberFiles/profile.gbr'
 ]
 
-// Storage folders
-const tmpDir = process.env.TEMP_DIR || path.join(__dirname, 'tmp');
-const imgDir = process.env.IMG_DIR || path.join(__dirname, 'img');
-
-function config() {
+/**
+ * Configures the folders used
+ * @param {Object} folderConfig Object with properties tmpDir and imgDir containing paths to temporary and image output folders
+ */
+function config(folderConfig) {
   // Create tmpDir if it does not exist
-  fs.ensureDirSync(tmpDir);
+  fs.ensureDirSync(folderConfig.tmpDir);
   // Create imgDir if it does not exist
-  fs.ensureDirSync(imgDir);
+  fs.ensureDirSync(folderConfig.imgDir);
 }
 
 function handleError(e) {
   // Clean up temp files
-  cleanupFiles();
+  // cleanupFiles();
   console.error(e);
   return e;
 }
 
 /**
  * Extracts the passed in zip file
- * @param {string} fileName
+ * @param {string} fileName Name of the file to be extracted
+ * @param {string} tmpDir Temporary directory to extract to
  * @returns {Promise} Promise object represents number of files extracted
  */
-async function extractArchive(fileName) {
+async function extractArchive(fileName, tmpDir) {
   // Configure archive to use
   const archive =  new StreamZip({
     file: fileName,
@@ -63,15 +64,15 @@ async function extractArchive(fileName) {
   })
 }
 
-async function getLayers(fileName) {
+async function getLayers(fileName, tmpDir) {
   return new Promise((resolve, reject) => {
-    const tempDir = path.join(tmpDir, 'archive');
-    extractArchive(fileName)
+    const extractDir = path.join(tmpDir, 'archive');
+    extractArchive(fileName, tmpDir)
       .then(numfiles => {
         console.log(`${numfiles} files extracted successfully`);
         const layers = gerberFiles.map(fileName => ({
           filename: fileName,
-          gerber: fs.createReadStream(path.join(tempDir, fileName))
+          gerber: fs.createReadStream(path.join(extractDir, fileName))
         }));
         if(numfiles > 0) {
           // Some files were extracted
@@ -87,9 +88,9 @@ async function getLayers(fileName) {
   })
 }
 
-function cleanupFiles() {
+function cleanupFiles(dir) {
   try {
-    let folder = path.join(tmpDir, 'archive');
+    let folder = path.join(dir, 'archive');
     fs.emptyDirSync(folder);
     console.log('Temp files removed.');
   } catch (err) {
@@ -97,7 +98,7 @@ function cleanupFiles() {
   }
 }
 
-async function gerberToImage(gerber, config, outputDir) {
+async function gerberToImage(gerber, config, tmpDir, outputDir) {
   // Set filenames
   const imageName = path.basename(gerber, '.zip');
   const destFile = path.join(outputDir, imageName) + '.png';
@@ -111,7 +112,7 @@ async function gerberToImage(gerber, config, outputDir) {
   }
 
   return new Promise((resolve, reject) => {
-    getLayers(gerber)
+    getLayers(gerber, tmpDir)
       .then(pcbStackup)
       .then(stackup => {
         sharp(Buffer.from(stackup.top.svg), { density: config.density })
@@ -121,10 +122,11 @@ async function gerberToImage(gerber, config, outputDir) {
         .toFile(destFile)
       })
       .then(() => {
-        cleanupFiles();
+        cleanupFiles(tmpDir);
         resolve(destFile);
       })
       .catch((e) => {
+        cleanupFiles(tmpDir)
         handleError(e);
         reject(e);
       })
@@ -133,8 +135,5 @@ async function gerberToImage(gerber, config, outputDir) {
 
 module.exports = {
   config,
-  extractArchive,
-  getLayers,
-  cleanupFiles,
   gerberToImage
 }
