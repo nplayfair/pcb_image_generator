@@ -1,7 +1,7 @@
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const path = require('path');
-const fileProc = require('@nplayfair/npe_gerber');
+const { ImageGenerator } = require('@nplayfair/npe_gerber');
 require('dotenv').config();
 
 const app = express();
@@ -12,19 +12,20 @@ const folderConfig = {
   tmpDir: process.env.TEMP_DIR || path.join(__dirname, 'tmp'),
   imgDir: process.env.IMG_DIR || path.join(__dirname, 'img'),
 };
+// Image processing configuration
+const imgConfig = {
+  resizeWidth: 600,
+  density: 1000,
+  compLevel: 1,
+};
 // Pass folder config to file processor
-fileProc.config(folderConfig);
+// fileProc.config(folderConfig);
 app.use(fileUpload());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(folderConfig.imgDir));
 
-// Image processing configuration
-const config = {
-  resizeWidth: 600,
-  density: 1000,
-  compLevel: 1,
-};
+const fileProc = new ImageGenerator(folderConfig, imgConfig);
 
 // Upload route
 app.post('/upload', (req, res) => {
@@ -43,12 +44,7 @@ app.post('/upload', (req, res) => {
   return archive.mv(uploadPath, (err) => {
     if (err) return res.status(500).send(err);
     return fileProc
-      .gerberToImage(
-        uploadPath,
-        config,
-        folderConfig.tmpDir,
-        folderConfig.imgDir
-      )
+      .gerberToImage(uploadPath)
       .then((filename) => res.send(`Generated image ${filename}`))
       .catch((e) => res.status(400).send(`Error occurred: ${e}`));
   });
