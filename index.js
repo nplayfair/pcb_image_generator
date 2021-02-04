@@ -1,10 +1,19 @@
+require('dotenv').config();
+const fs = require('fs');
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const { ImageGenerator } = require('@nplayfair/npe_gerber');
-require('dotenv').config();
+const AWS = require('aws-sdk');
 
 const app = express();
+const s3 = new AWS.S3({
+  accessKeyId: process.env.ID,
+  secretAccessKey: process.env.SECRET,
+  endpoint: process.env.S3_URL,
+  s3ForcePathStyle: true,
+  signatureVersion: 'v4',
+});
 
 // Options
 const PORT = process.env.PORT || 3000;
@@ -45,7 +54,25 @@ app.post('/upload', (req, res) => {
     if (err) return res.status(500).send(err);
     return fileProc
       .gerberToImage(uploadPath)
-      .then((filename) => res.send(`Generated image ${filename}`))
+      .then((fileName) => {
+        // res.send(`Generated image ${filename}`)
+        const file = fs.readFileSync(fileName);
+        // Construct params object
+        const params = {
+          Bucket: process.env.BUCKET,
+          Key: path.basename(fileName),
+          Body: file,
+        };
+        // Upload to S3
+        s3.upload(params, (s3err, data) => {
+          if (err) {
+            console.error(s3err);
+          } else {
+            // res.send(`Successfully uploaded ${data.Location}`);
+            res.render('image', { imgUrl: data.Location });
+          }
+        });
+      })
       .catch((e) => res.status(400).send(`Error occurred: ${e}`));
   });
 });
