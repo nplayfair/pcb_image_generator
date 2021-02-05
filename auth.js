@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 const express = require('express');
 const passport = require('passport');
 const querystring = require('querystring');
@@ -18,9 +19,9 @@ router.get(
 
 // Auth callback route
 router.get('/callback', (req, res, next) => {
-  passport.authenticate('auth0', (err, user, info) => {
-    if (err) {
-      return next(err);
+  passport.authenticate('auth0', (autherr, user) => {
+    if (autherr) {
+      return next(autherr);
     }
     if (!user) {
       return res.redirect('/login');
@@ -29,7 +30,7 @@ router.get('/callback', (req, res, next) => {
       if (err) {
         return next(err);
       }
-      const returnTo = req.session.returnTo;
+      const { returnTo } = req.session;
       delete req.session.returnTo;
       res.redirect(returnTo || '/');
     });
@@ -54,7 +55,7 @@ router.get('/logout', (req, res) => {
 
   const searchString = querystring.stringify({
     client_id: process.env.AUTH0_CLIENT_ID,
-    returnTo: returnTo,
+    returnTo,
   });
   logoutURL.search = searchString;
   res.redirect(logoutURL);
