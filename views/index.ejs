@@ -7,6 +7,7 @@
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+  <% if (isAuthenticated) { %>
   <form action="/upload" method="post" encType="multipart/form-data" class="uploadForm">
     <input type="file" name="gerberArchive" id="gerber" onchange="fileLabel()">
     <p id="info">Drag your zipped gerber file here or click this area and select it.</p>
@@ -21,5 +22,8 @@
       info.innerHTML = gerber.files[0].name;
     }
   </script>
+  <% } else { %>
+    <a href="/login">Login first</a>
+    <% } %>
 </body>
 </html>

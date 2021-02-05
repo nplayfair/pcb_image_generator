@@ -2,8 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const path = require('path');
+const expressSession = require('express-session');
+const passport = require('passport');
+const Auth0Strategy = require('passport-auth0');
 const { ImageGenerator } = require('@nplayfair/npe_gerber');
 const AWS = require('aws-sdk');
+const authRouter = require('./auth.js');
 
 const app = express();
 const s3 = new AWS.S3({
@@ -27,10 +31,66 @@ const imgConfig = {
   compLevel: 1,
 };
 
+// Session config
+const session = {
+  secret: process.env.SESSION_SECRET,
+  cookie: {},
+  resave: false,
+  saveUninitialized: false,
+};
+
+if (app.get('env') === 'production') {
+  // Serve secure cookies, requires HTTPS
+  session.cookie.secure = true;
+}
+
+// Passport Config
+const strategy = new Auth0Strategy(
+  {
+    domain: process.env.AUTH0_DOMAIN,
+    clientID: process.env.AUTH0_CLIENT_ID,
+    clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    callbackURL: process.env.AUTH0_CALLBACK_URL,
+  },
+  function (accessToken, refreshToken, extraParams, profile, done) {
+    /**
+     * Access tokens are used to authorize users to an API
+     * (resource server)
+     * accessToken is the token to call the Auth0 API
+     * or a secured third-party API
+     * extraParams.id_token has the JSON Web Token
+     * profile has all the information from the user
+     */
+
+    return done(null, profile);
+  }
+);
+
+// App config
 app.use(fileUpload());
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(folderConfig.imgDir));
+// Auth
+app.use(expressSession(session));
+passport.use(strategy);
+app.use(passport.initialize());
+app.use(passport.session());
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+// Auth middleware
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.isAuthenticated();
+  next();
+});
+
+app.use('/', authRouter);
 
 const fileProc = new ImageGenerator(folderConfig, imgConfig);
 
@@ -73,6 +133,8 @@ app.post('/upload', (req, res) => {
   });
 });
 
+app.get('/upload', (req, res) => res.redirect('/'));
+
 // Upload page
 app.get('/', (req, res) => {
   res.render('index');
@@ -80,7 +142,7 @@ app.get('/', (req, res) => {
 
 // Image page
 app.get('/image', (req, res) => {
-  res.render('image', { imgUrl: '/img/test.png' });
+  res.render('image', { imgUrl: null });
 });
 
 app.listen(PORT, () => {
