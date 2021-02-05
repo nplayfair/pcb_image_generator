@@ -53,15 +53,14 @@ app.post('/upload', (req, res) => {
   return archive.mv(uploadPath, (err) => {
     if (err) return res.status(500).send(err);
     return fileProc
-      .gerberToImage(uploadPath)
-      .then((fileName) => {
-        // res.send(`Generated image ${filename}`)
-        const file = fs.readFileSync(fileName);
+      .gerberToStream(uploadPath)
+      .then((stream) => {
+        const imageName = `${path.basename(archive.name, '.zip')}.png`;
         // Construct params object
         const params = {
           Bucket: process.env.BUCKET,
-          Key: path.basename(fileName),
-          Body: file,
+          Key: imageName,
+          Body: stream,
         };
         // Upload to S3
         s3.upload(params, (s3err, data) => {
@@ -72,6 +71,7 @@ app.post('/upload', (req, res) => {
             res.render('image', { imgUrl: data.Location });
           }
         });
+        // console.log(stream);
       })
       .catch((e) => res.status(400).send(`Error occurred: ${e}`));
   });
