@@ -1,5 +1,4 @@
 require('dotenv').config();
-const fs = require('fs');
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const path = require('path');
@@ -27,8 +26,7 @@ const imgConfig = {
   density: 1000,
   compLevel: 1,
 };
-// Pass folder config to file processor
-// fileProc.config(folderConfig);
+
 app.use(fileUpload());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
@@ -67,11 +65,9 @@ app.post('/upload', (req, res) => {
           if (err) {
             console.error(s3err);
           } else {
-            // res.send(`Successfully uploaded ${data.Location}`);
             res.render('image', { imgUrl: data.Location });
           }
         });
-        // console.log(stream);
       })
       .catch((e) => res.status(400).send(`Error occurred: ${e}`));
   });
