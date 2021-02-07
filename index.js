@@ -52,6 +52,7 @@ const session = {
 if (app.get('env') === 'production') {
   // Serve secure cookies, requires HTTPS
   session.cookie.secure = true;
+  app.set('trust proxy', 1)
 }
 
 // Passport Config
@@ -102,6 +103,14 @@ app.use((req, res, next) => {
 });
 
 app.use('/', authRouter);
+
+const secured = (req, res, next) => {
+  if (req.user) {
+    return next();
+  }
+  res.session.returnTo = req.originalUrl;
+  res.redirect('/login');
+};
 
 const fileProc = new ImageGenerator(folderConfig, imgConfig, layerNames);
 
