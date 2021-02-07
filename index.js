@@ -32,6 +32,15 @@ const imgConfig = {
   compLevel: 1,
 };
 
+const layerNames = [
+  'CAMOutputs/DrillFiles/drills.xln',
+  'CAMOutputs/GerberFiles/copper_top.gbr',
+  'CAMOutputs/GerberFiles/silkscreen_top.gbr',
+  'CAMOutputs/GerberFiles/soldermask_top.gbr',
+  'CAMOutputs/GerberFiles/solderpaste_top.gbr',
+  'CAMOutputs/GerberFiles/profile.gbr',
+];
+
 // Session config
 const session = {
   secret: process.env.SESSION_SECRET,
@@ -94,7 +103,7 @@ app.use((req, res, next) => {
 
 app.use('/', authRouter);
 
-const fileProc = new ImageGenerator(folderConfig, imgConfig);
+const fileProc = new ImageGenerator(folderConfig, imgConfig, layerNames);
 
 // Upload route
 app.post('/upload', (req, res) => {
